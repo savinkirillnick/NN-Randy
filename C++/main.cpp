@@ -9,12 +9,14 @@
 #include <sstream>
  
 using namespace std;
- 
+
+//Функция вычисления сигмоида
 double sigmoid(double value)
 {
 	return 1/(1 + exp(-value));
 }
- 
+
+//Класс, в который будем сохранять слои нейронов и их индексы.
 template <typename T>
 class Vector
 {
@@ -44,7 +46,8 @@ private:
 	T *values;
  
 };
- 
+
+//Класс, в который будем сохранять все связи между соседними слоями нейронов
 class Field
 {
 public:
@@ -136,7 +139,8 @@ private:
 	int c;
 	double **rates;
 };
- 
+
+//Функция пересчета нейронов класса, путем перемножения нейнорон на веса их связей и вычисления сигмоида
 void Calculate (Vector <double> &input, Vector <double> &output, Field &f)
 {
 	double sum = 0;
@@ -150,7 +154,8 @@ void Calculate (Vector <double> &input, Vector <double> &output, Field &f)
 		output.SetValue(c, sigmoid(sum));
 	}
 }
- 
+
+//Функция для добавления строки в двумерный динамический массив
 void addRow (double ** &arr, int &rows, int &cols, double * &varr)
 {
 	double **newArray = new double *[rows + 1];
@@ -174,7 +179,8 @@ void addRow (double ** &arr, int &rows, int &cols, double * &varr)
 	rows++;
 	arr = newArray;
 }
- 
+
+//Функция добавления нового значения в конец динамического массива
 void addValue (double * &arr, int &size, double value)
 {
 	double *newArray = new double [size+1];
@@ -187,7 +193,8 @@ void addValue (double * &arr, int &size, double value)
 	delete [] arr;
 	arr = newArray;
 }
- 
+
+//Функция перемешивания значений вектора, хранящего индексы нейронов
 void Shuffle(Vector <int> &v)
 {
 	srand(time(0));
@@ -207,22 +214,21 @@ void Shuffle(Vector <int> &v)
 }
  
 int main() {
- 
+	
 	double temp;
 	ifstream fin;
 	stringstream sstm;
 	string fileName;
+	string tmpString;
  
-	int numLayers;
+	int numLayers; //Количество слоев
 	cout << "Enter amount of layers" << endl << "Minimum 3 layers (input, hidden, output)" << endl << "More layers create more hidden layers." << endl;
 	cin >> numLayers;
 	cout << endl;
  
-	int layerId = 1;
-	int *NeuronsInLayer = new int [numLayers];
- 
-	for (int i = 0; i < numLayers; i++,layerId++) {
-		cout << "Enter amount of neurons for layer " << layerId << endl;
+	int *NeuronsInLayer = new int [numLayers]; //Количество нейронов в слое
+	for (int i = 0; i < numLayers; i++) {
+		cout << "Enter amount of neurons for layer " << (i+1) << endl;
 		cin >> NeuronsInLayer[i];
 	}
  
@@ -233,13 +239,14 @@ int main() {
 	}
 	cout << endl;
   
-	//Amount connections of Fields
+	//Количество полей содержащих все связи между соседними слоями нейронов
 	int numFields = numLayers-1;
+	
+	//Количество связей в каждом поле
 	int *ConnectionsBtwnLayers = new int [numFields];
- 
-	for (int i = 0, j = 1; i < numFields; i++, j++)
+	for (int i = 0; i < numFields; i++)
 	{
-		ConnectionsBtwnLayers[i] = NeuronsInLayer[i] * NeuronsInLayer[j];
+		ConnectionsBtwnLayers[i] = NeuronsInLayer[i] * NeuronsInLayer[i+1];
 	}
  
 	cout << "Connections: ";
@@ -249,7 +256,7 @@ int main() {
 	}
 	cout << endl << endl;
  
-	//Create vectors of indexes of field rates
+	//Создаем векторы содержащие индексы нейронов каждого слоя (понадобитлся для перемешивания)
 	Vector <int> fids[numFields];
 	for (int i = 0; i < numFields; i++)
 	{
@@ -260,27 +267,26 @@ int main() {
 		}
 	}
  
-	//Create vectors of neurons
+	//Создаем векторы нейронов для каждого слоя
 	Vector <double> v[numLayers];
 	for (int i = 0; i < numLayers; i++)
 	{
 		v[i] = Vector <double> (NeuronsInLayer[i]);
 	}
  
-	//Create field of rates
+	//CСоздаем поля коэффициентов (понадобятся для вычислений)
 	Field f[numFields];
 	for (int i = 0; i < numFields; i++)
 	{
+		//Пробуем прочитать коэффициенты из файла
 		sstm.str().resize(0);
 		f[i] = Field(NeuronsInLayer[i],NeuronsInLayer[i+1]);
 		sstm << "field" << i << ".txt";
 		fileName = sstm.str();
 		fin.open(fileName.c_str());
- 
-		cout << fileName << endl;
- 
 		if (!fin.is_open())
 		{
+			//Если файл не найден, создаем коэффициенты случайным образом
 			f[i].Randomize();
 		}
 		else
@@ -298,17 +304,15 @@ int main() {
 				}
 			}
 		}
- 
+ 		//Показываем первые 10 элементов (для информации)
 		f[i].ViewTenValues();
 		fin.close();
 	}
 	cout << endl;
   
-	//Load data from file
+	//Читаем из файла данные, содержащие значения индикаторов за периоды
 	double *tmpArr = new double [(NeuronsInLayer[0])];
 	int inputSize = 0;
-	string tmpString;
- 
 	double **inputArr = new double * [1];
  
 	cout << "Enter filename of Input Vector with rows of " << NeuronsInLayer[0] << " values:" << endl;
@@ -326,12 +330,8 @@ int main() {
 		{
 			sstm.str().resize(0);
 			getline(fin,tmpString);
-			//stringstream ssin(tmpString);
 			sstm << tmpString;
 			int i = 0;
-			//while (ssin.good() && i < NeuronsInLayer[0]){
-			//	ssin >> tmpArr[i++];
-			//}
 			while (sstm.good() && i < NeuronsInLayer[0]){
 				sstm >> tmpArr[i++];
 			}
@@ -352,7 +352,7 @@ int main() {
 	}
 	cout << endl;
  
-	//Load prices from file
+	//Читаем из файла цены за периоды
 	double *pricesArr = new double [1];
 	int pricesSize = 0;
  
@@ -389,18 +389,18 @@ int main() {
 	cout << endl;
   
 	cout << "TRAINING" << endl;
-	//TRAINING
+	//ОБУЧЕНИЕ
  
 	double startBalanceQuote, currentBalanceQuote, currentBalanceBase, prevBalanceSum, currentBalanceSum, amountBet;
 	int epoch = 0, steps, prevSteps, times = 1, numBuys, numSells;
  
 	Field modf[numFields];
-	//Copy fields
+	//Копируем поля
 	for (int i = 0; i < numFields; i++)
 	{
 		modf[i] = f[i];
 	}
-	//Shuffle
+	//Перемешиваем
 	for (int i = 0; i < numFields; i++){
 		Shuffle(fids[i]);
 	}
@@ -459,19 +459,19 @@ int main() {
 		{
 			for (int j = 0; j < NeuronsInLayer[0]; j++)
 			{
-				//Put inputs data in First layer
+				//Вставляем входные данные в первый слой
 				v[0].SetValue(j, inputArr[i][j]);
 			}
 			for (int j = 0, k = 1; j < numFields; j++, k++)
 			{
-				//Calculate neurons for other layers
+				//Пересчитываем значения нейронов для остальных слоев
 				Calculate (v[j], v[k], f[j]);
 			}
-			//Check last neurons
+			//Проверяем значение последнего нейрона последнего слоя
 			if (v[numLayers-1].GetValue(0) > 0.8)
 			{
 				if (currentBalanceQuote >= amountBet) {
-					// BUY
+					// ПОКУПКА
 					currentBalanceQuote -= amountBet;
 					currentBalanceBase += amountBet * 0.999 / pricesArr[i];
 					numBuys++;
@@ -481,7 +481,7 @@ int main() {
 			{
 				if (currentBalanceBase >= amountBet / pricesArr[i])
 				{
-					// SELL
+					// ПРОДАЖА
 					currentBalanceBase -= amountBet / pricesArr[i];
 					currentBalanceQuote += amountBet * 0.999;
 					numSells++;
@@ -508,6 +508,7 @@ int main() {
 		}
  
 		if (!(epoch%100)) {
+			//Каждые 100 эпох делаем дамп коэффициентов в файлы, и выводим инфу
 			cout << "Epochs: " << epoch << "\tSteps: " << steps << "/" << inputSize << endl;
 			cout << "Start Balance: " << startBalanceQuote << "Current Balance: " << currentBalanceSum << endl << endl;
 			cout << "Buys: " << numBuys << "\t\tSells: " << numSells << endl;
