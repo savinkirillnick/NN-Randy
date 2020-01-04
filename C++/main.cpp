@@ -16,7 +16,7 @@ double sigmoid(double value)
 	return 1/(1 + exp(-value));
 }
 
-//Класс, в который будем сохранять слои нейронов и их индексы.
+//Класс, в который будем сохранять слои нейронов и индексы связей.
 template <typename T>
 class Vector
 {
