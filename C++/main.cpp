@@ -256,7 +256,7 @@ int main() {
 	}
 	cout << endl << endl;
  
-	//Создаем векторы содержащие индексы нейронов каждого слоя (понадобитлся для перемешивания)
+	//Создаем векторы содержащие индексы связей нейронов каждого поля (понадобитлся для перемешивания)
 	Vector <int> fids[numFields];
 	for (int i = 0; i < numFields; i++)
 	{
@@ -422,6 +422,7 @@ int main() {
 		steps = 0;
 		if (times % 3 == 1)
 		{
+			//Увеличиваем коэффициенты на шаг обучения
 			for (int i = 0; i < numFields; i++)
 			{
 				for (int j = 0; j < NeuronsInLayer[i+1]; j++)
@@ -436,6 +437,7 @@ int main() {
 		}
 		if (times % 3 == 2)
 		{
+			//Уменьшаем коэффициенты на шаг обучения
 			for (int i = 0; i < numFields; i++)
 			{
 				for (int j = 0; j < NeuronsInLayer[i+1]; j++)
@@ -450,6 +452,7 @@ int main() {
 		}
 		if (times % 3 == 0)
 		{
+			//Перемешиваем коэффициенты
 			for (int i = 0; i < numFields; i++){
 				Shuffle(fids[i]);
 			}
@@ -513,7 +516,6 @@ int main() {
 			cout << "Start Balance: " << startBalanceQuote << "Current Balance: " << currentBalanceSum << endl << endl;
 			cout << "Buys: " << numBuys << "\t\tSells: " << numSells << endl;
  
-			string fileName;
 			for (int i = 0; i < numFields; i++)
 			{
 				sstm.str().resize(0);
