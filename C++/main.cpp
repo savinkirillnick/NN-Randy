@@ -194,7 +194,7 @@ void addValue (double * &arr, int &size, double value)
 	arr = newArray;
 }
 
-//Функция перемешивания значений вектора, хранящего индексы нейронов
+//Функция перемешивания значений вектора, хранящего индексы связей нейронов
 void Shuffle(Vector <int> &v)
 {
 	srand(time(0));
