@@ -23,11 +23,46 @@ class Vector
 public:
 	Vector ()
 	{
+		this->size = 0;
 	}
 	Vector (int size)
 	{
 		this->size = size;
 		this->values = new T [size];
+		for (int i = 0; i < size; i++)
+		{
+			this->value[i] = 0;
+		}
+	};
+	Vector (const Vector &other)
+	{
+		this->size = other.size;
+		this->values = new T [other.size];
+		for (int i = 0; i < other.size; i++)
+		{
+			this->values[i] = other.values[i];
+		}
+	}
+	Vector &operator = (const Vector &other)
+	{
+		if (this->size > 0 && this->values != 0)
+		{
+			delete [] this->values;
+		}
+		this->size = other.size;
+		this->values = new T [other.size];
+		for (int i = 0; i < other.size; i++)
+		{
+			this->values[i] = other.values[i];
+		}
+		return *this;
+	};
+	~Vector ()
+	{
+		if (this->size > 0 && this->values != 0)
+		{
+			delete [] this->values;
+		}
 	}
 	void SetValue (int id, T value)
 	{
@@ -53,8 +88,10 @@ class Field
 public:
 	Field()
 	{
+		this->n = 0;
+		this->c = 0;
 	}
-	Field (int n, int c)
+	Field (const int &n, const int &c)
 	{
 		this->n = n;
 		this->c = c;
@@ -62,8 +99,12 @@ public:
 		for (int i = 0; i < n; i++)
 		{
 			this->rates[i] = new double[c];
+			for (int j = 0; j < c; j++)
+			{
+				this->rates[i][j] = 0;
+			}
 		}
-	}
+	};
 	Field (const Field &other)
 	{
 		this->n = other.n;
@@ -76,21 +117,22 @@ public:
 			{
 				this->rates[i][j] = other.rates[i][j];
 			}
- 
 		}
-	}
+	};
 	Field &operator = (const Field &other)
 	{
-		this->n = other.n;
-		this->c = other.c;
-		if (this->rates != 0)
+		if (this->n > 0)
 		{
 			for (int i = 0; i < this->n; i++)
 			{
-				delete [] this->rates[i];
+				if (this->c > 0){
+					delete [] this->rates[i];
+				}
 			}
 			delete [] this->rates;
 		}
+		this->n = other.n;
+		this->c = other.c;
 		this->rates = new double * [other.n];
 		for (int i = 0; i < other.n; i++)
 		{
@@ -99,10 +141,18 @@ public:
 			{
 				this->rates[i][j] = other.rates[i][j];
 			}
- 
+
 		}
 		return *this;
 	};
+	~Field()
+	{
+		for (int i = 0; i < this->n; i++)
+		{
+			delete [] this->rates[i];
+		}
+		delete [] this->rates;
+	}
 	void Randomize ()
 	{
 		for (int i = 0; i < n; i++)
@@ -176,6 +226,7 @@ void addRow (double ** &arr, int &rows, int &cols, double * &varr)
 	{
 		delete [] arr[i];
 	}
+	delete [] arr;
 	rows++;
 	arr = newArray;
 }
@@ -184,7 +235,7 @@ void addRow (double ** &arr, int &rows, int &cols, double * &varr)
 void addValue (double * &arr, int &size, double value)
 {
 	double *newArray = new double [size+1];
-	for (int i=0; i<size; i++)
+	for (int i = 0; i < size; i++)
 	{
 		newArray[i] = arr[i];
 	}
@@ -204,8 +255,8 @@ void Shuffle(Vector <int> &v)
  
 	for (int i = 0; i < size; i++)
 	{
-		a = rand()%size;
-		b = rand()%size;
+		a = rand() % size;
+		b = rand() % size;
 		valueA = v.GetValue(a);
 		valueB = v.GetValue(b);
 		v.SetValue(a, valueB);
@@ -214,10 +265,9 @@ void Shuffle(Vector <int> &v)
 }
  
 int main() {
-	
+	//Временные переменные
 	double temp;
 	ifstream fin;
-	stringstream sstm;
 	string fileName;
 	string tmpString;
  
@@ -261,7 +311,7 @@ int main() {
 	for (int i = 0; i < numFields; i++)
 	{
 		fids[i] = Vector <int> (ConnectionsBtwnLayers[i]);
-		for (int j = 0; j < (ConnectionsBtwnLayers[i]); j++)
+		for (int j = 0; j < ConnectionsBtwnLayers[i]; j++)
 		{
 			fids[i].SetValue(j, j);
 		}
@@ -278,9 +328,11 @@ int main() {
 	Field f[numFields];
 	for (int i = 0; i < numFields; i++)
 	{
-		//Пробуем прочитать коэффициенты из файла
-		sstm.str().resize(0);
+		//Создаем поле
 		f[i] = Field(NeuronsInLayer[i],NeuronsInLayer[i+1]);
+		
+		//Пробуем прочитать коэффициенты из файла (для дообучения сети)
+		stringstream sstm;
 		sstm << "field" << i << ".txt";
 		fileName = sstm.str();
 		fin.open(fileName.c_str());
@@ -311,7 +363,6 @@ int main() {
 	cout << endl;
   
 	//Читаем из файла данные, содержащие значения индикаторов за периоды
-	double *tmpArr = new double [(NeuronsInLayer[0])];
 	int inputSize = 0;
 	double **inputArr = new double * [1];
  
@@ -328,21 +379,20 @@ int main() {
 	{
 		while (!fin.eof())
 		{
-			sstm.str().resize(0);
-			getline(fin,tmpString);
-			sstm << tmpString;
-			int i = 0;
-			while (sstm.good() && i < NeuronsInLayer[0]){
-				sstm >> tmpArr[i++];
+			double tmpArr[NeuronsInLayer[0]];
+			for (int i = 0; i < NeuronsInLayer[0]; i++)
+			{
+				fin >> tmpArr[i];
 			}
 			addRow (inputArr, inputSize, NeuronsInLayer[0], tmpArr);
 		}
 	}
 	fin.close();
- 
 	cout << endl;
+	
+	//Показываем первые 10 строк значений из загруженых данных
 	cout << "INPUTS:" << endl;
-	for (int i = 0; i < inputSize; i++)
+	for (int i = 0; i < inputSize && i < 10; i++)
 	{
 		for (int j = 0; j < NeuronsInLayer[0]; j++)
 		{
@@ -376,8 +426,10 @@ int main() {
 	fin.close();
  
 	cout << endl;
+	
+	//Показываем первые 10 значений из загруженых данных
 	cout << "PRICES:" << endl;
-	for (int i = 0; i < pricesSize; i++)
+	for (int i = 0; i < pricesSize && i < 10; i++)
 	{
 		cout << pricesArr[i] << endl;
 	}
@@ -391,8 +443,10 @@ int main() {
 	cout << "TRAINING" << endl;
 	//ОБУЧЕНИЕ
  
-	double startBalanceQuote, currentBalanceQuote, currentBalanceBase, prevBalanceSum, currentBalanceSum, amountBet;
-	int epoch = 0, steps, prevSteps, times = 1, numBuys, numSells;
+	double startBalanceQuote, currentBalanceQuote, currentBalanceBase;
+	double prevBalanceSum = 0.0, currentBalanceSum = 0.0, amountBet = 10.0;
+	int epoch = 0, numBuys, numSells;
+	double learningStep = 0.1;
  
 	Field modf[numFields];
 	//Копируем поля
@@ -404,38 +458,18 @@ int main() {
 	for (int i = 0; i < numFields; i++){
 		Shuffle(fids[i]);
 	}
-	int n, c;
+	int n = 0, c = 0;
  
 	while (epoch < maxEpoch)
 	{
 		startBalanceQuote = 10000.0;
 		currentBalanceQuote = 5500.0;
 		currentBalanceBase = 1.0;
-		prevBalanceSum = 0.0;
-		currentBalanceSum = 0.0;
-		amountBet = 10.0;
  
 		numBuys = 0;
 		numSells = 0;
- 
-		prevSteps = steps;
-		steps = 0;
-		if (times % 3 == 1)
-		{
-			//Увеличиваем коэффициенты на шаг обучения
-			for (int i = 0; i < numFields; i++)
-			{
-				for (int j = 0; j < NeuronsInLayer[i+1]; j++)
-				{
-					n = fids[i].GetValue(j) / NeuronsInLayer[i+1];
-					c = fids[i].GetValue(j) % NeuronsInLayer[i+1];
-					temp = modf[i].GetValue(n,c);
-					temp += 0.1;
-					modf[i].SetValue(n,c,temp);
-				}
-			}
-		}
-		if (times % 3 == 2)
+
+		if (epoch % 2 == 0)
 		{
 			//Уменьшаем коэффициенты на шаг обучения
 			for (int i = 0; i < numFields; i++)
@@ -445,19 +479,28 @@ int main() {
 					n = fids[i].GetValue(j) / NeuronsInLayer[i+1];
 					c = fids[i].GetValue(j) % NeuronsInLayer[i+1];
 					temp = modf[i].GetValue(n,c);
-					temp -= 0.1;
+					temp -= learningStep;
 					modf[i].SetValue(n,c,temp);
 				}
 			}
 		}
-		if (times % 3 == 0)
+		if (epoch % 2 == 1)
 		{
-			//Перемешиваем коэффициенты
-			for (int i = 0; i < numFields; i++){
-				Shuffle(fids[i]);
+			//Увеличиваем коэффициенты на шаг обучения
+			for (int i = 0; i < numFields; i++)
+			{
+				for (int j = 0; j < NeuronsInLayer[i+1]; j++)
+				{
+					n = fids[i].GetValue(j) / NeuronsInLayer[i+1];
+					c = fids[i].GetValue(j) % NeuronsInLayer[i+1];
+					temp = modf[i].GetValue(n,c);
+					temp += learningStep;
+					modf[i].SetValue(n,c,temp);
+				}
 			}
 		}
- 
+
+		//Прогоняем сеть с текущими коэфициентами по всем загруженным данным
 		for (int i = 0; i < inputSize; i++)
 		{
 			for (int j = 0; j < NeuronsInLayer[0]; j++)
@@ -465,10 +508,10 @@ int main() {
 				//Вставляем входные данные в первый слой
 				v[0].SetValue(j, inputArr[i][j]);
 			}
-			for (int j = 0, k = 1; j < numFields; j++, k++)
+			for (int j = 0; j < numFields; j++)
 			{
 				//Пересчитываем значения нейронов для остальных слоев
-				Calculate (v[j], v[k], f[j]);
+				Calculate (v[j], v[j+1], f[j]);
 			}
 			//Проверяем значение последнего нейрона последнего слоя
 			if (v[numLayers-1].GetValue(0) > 0.8)
@@ -491,34 +534,31 @@ int main() {
 				}
 			}	
 			currentBalanceSum = currentBalanceQuote + currentBalanceBase * pricesArr[i];
-			steps++;
 		}
  
-		if (prevSteps <= steps || prevBalanceSum <= currentBalanceSum)
+		if (currentBalanceSum > prevBalanceSum)
 		{
+			prevBalanceSum = currentBalanceSum;
 			for (int i = 0; i < numFields; i++)
 			{
 				f[i] = modf[i];
 			}
-			epoch++;
-			times = 0;
 		} else {
 			for (int i = 0; i < numFields; i++)
 			{
 				modf[i] = f[i];
 			}
-			times++;
 		}
- 
+ 		epoch++;
+		
 		if (!(epoch%100)) {
 			//Каждые 100 эпох делаем дамп коэффициентов в файлы, и выводим инфу
-			cout << "Epochs: " << epoch << "\tSteps: " << steps << "/" << inputSize << endl;
+			cout << "Epochs: " << epoch << "\tBuys: " << numBuys << "\tSells: " << numSells << endl;
 			cout << "Start Balance: " << startBalanceQuote << "Current Balance: " << currentBalanceSum << endl << endl;
-			cout << "Buys: " << numBuys << "\t\tSells: " << numSells << endl;
  
 			for (int i = 0; i < numFields; i++)
 			{
-				sstm.str().resize(0);
+				stringstream sstm;
 				sstm << "field" << i << ".txt";
 				fileName = sstm.str();
  
@@ -545,11 +585,9 @@ int main() {
 						}
 					}
 				}
- 
 				fout.close();
 			}
 		}
- 
 	}
  
 	delete [] NeuronsInLayer;
