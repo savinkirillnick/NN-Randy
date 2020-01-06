@@ -436,19 +436,23 @@ int main() {
 	}
 	cout << endl;
  
-	int maxEpoch;
-	cout << "Enter maximum amount of epochs:" << endl;
-	cin >> maxEpoch;
-	cout << endl;
-  
 	cout << "TRAINING" << endl;
 	//ОБУЧЕНИЕ
- 
+
+	StartTraining:
+	int maxEpoch;
+	cout << "Enter maximum amount of epochs: ";
+	cin >> maxEpoch;
+	cout << endl;
+	
 	double startBalanceQuote, currentBalanceQuote, currentBalanceBase;
 	double prevBalanceSum = 0.0, currentBalanceSum = 0.0, amountBet = 10.0;
 	int epoch = 0, numBuys, numSells;
-	double learningStep = 0.1;
+	double learningStep;
  
+	cout << "Enter Learning Step: ";
+	cin >> learningStep;
+	
 	Field modf[numFields];
 	//Копируем поля
 	for (int i = 0; i < numFields; i++)
@@ -464,7 +468,7 @@ int main() {
 	while (epoch < maxEpoch)
 	{
 		startBalanceQuote = 10000.0;
-		currentBalanceQuote = 5500.0;
+		currentBalanceQuote = 5700.0;
 		currentBalanceBase = 1.0;
  
 		numBuys = 0;
@@ -512,7 +516,7 @@ int main() {
 			for (int j = 0; j < numFields; j++)
 			{
 				//Пересчитываем значения нейронов для остальных слоев
-				Calculate (v[j], v[j+1], f[j]);
+				Calculate (v[j], v[j+1], modf[j]);
 			}
 			//Проверяем значение последнего нейрона последнего слоя
 			if (v[numLayers-1].GetValue(0) > 0.8)
@@ -539,18 +543,30 @@ int main() {
  
 		if (currentBalanceSum > prevBalanceSum)
 		{
+			//Если текущий баланс превышает предыдущий, применяем коэффициенты
 			prevBalanceSum = currentBalanceSum;
 			for (int i = 0; i < numFields; i++)
 			{
 				f[i] = modf[i];
 			}
 		} else {
+			//Если текущий баланс не превышает предыдущий, восстанавливаем коэффициенты
 			for (int i = 0; i < numFields; i++)
 			{
 				modf[i] = f[i];
 			}
 		}
  		epoch++;
+		if (!(epoch%1000)) {
+			//Каждые 100 эпох будем рандомизировать по 1 коэффициенту в слое
+			for (int i = 0; i < numFields; i++)
+			{
+				n = fids[i].GetValue(0) / NeuronsInLayer[i+1];
+				c = fids[i].GetValue(0) % NeuronsInLayer[i+1];
+				double tmp = (double) (rand() % 100 - 50)/10;
+				modf[i].SetValue(n,c,tmp);
+			}
+		}
 		
 		if (!(epoch%100)) {
 			//Каждые 100 эпох делаем дамп коэффициентов в файлы, и выводим инфу
@@ -590,7 +606,14 @@ int main() {
 			}
 		}
 	}
- 
+
+	cout << "Enter 1 to repeat Training: ";
+	cin >> choose;
+	if (choose == 1)
+	{
+		goto StartTraining;
+	}
+
 	delete [] NeuronsInLayer;
 	delete [] ConnectionsBtwnLayers;
 	return 0;
