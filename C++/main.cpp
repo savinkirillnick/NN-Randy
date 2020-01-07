@@ -25,7 +25,7 @@ public:
 	{
 		this->size = 0;
 	}
-	Vector (int size)
+	Vector (const int size)
 	{
 		this->size = size;
 		this->values = new T [size];
@@ -45,7 +45,7 @@ public:
 	}
 	Vector &operator = (const Vector &other)
 	{
-		if (this->size > 0 && this->values != 0)
+		if (this->size > 0)
 		{
 			delete [] this->values;
 		}
@@ -59,7 +59,7 @@ public:
 	};
 	~Vector ()
 	{
-		if (this->size > 0 && this->values != 0)
+		if (this->size > 0)
 		{
 			delete [] this->values;
 		}
@@ -96,10 +96,10 @@ public:
 		this->n = n;
 		this->c = c;
 		this->rates = new double * [n];
-		for (int i = 0; i < n; i++)
+		for (int i = 0; i < this->n; i++)
 		{
 			this->rates[i] = new double[c];
-			for (int j = 0; j < c; j++)
+			for (int j = 0; j < this->c; j++)
 			{
 				this->rates[i][j] = 0;
 			}
@@ -271,6 +271,7 @@ int main() {
 	ifstream fin;
 	string fileName;
 	string tmpString;
+	int choose;
  
 	int numLayers; //Количество слоев
 	cout << "Enter amount of layers" << endl << "Minimum 3 layers (input, hidden, output)" << endl << "More layers create more hidden layers." << endl;
@@ -325,7 +326,7 @@ int main() {
 		v[i] = Vector <double> (NeuronsInLayer[i]);
 	}
  
-	//CСоздаем поля коэффициентов (понадобятся для вычислений)
+	//Создаем поля коэффициентов (понадобятся для вычислений)
 	Field f[numFields];
 	for (int i = 0; i < numFields; i++)
 	{
@@ -425,7 +426,6 @@ int main() {
 		}
 	}
 	fin.close();
- 
 	cout << endl;
 	
 	//Показываем первые 10 значений из загруженых данных
@@ -446,7 +446,7 @@ int main() {
 	cout << endl;
 	
 	double startBalanceQuote, currentBalanceQuote, currentBalanceBase;
-	double prevBalanceSum = 0.0, currentBalanceSum = 0.0, amountBet = 10.0;
+	double prevBalanceSum = 0, currentBalanceSum = 0, amountBet = 10;
 	int epoch = 0, numBuys, numSells;
 	double learningStep;
  
@@ -467,9 +467,9 @@ int main() {
  
 	while (epoch < maxEpoch)
 	{
-		startBalanceQuote = 10000.0;
-		currentBalanceQuote = 5700.0;
-		currentBalanceBase = 1.0;
+		startBalanceQuote = 10000;
+		currentBalanceQuote = 5700;
+		currentBalanceBase = 1;
  
 		numBuys = 0;
 		numSells = 0;
@@ -556,8 +556,14 @@ int main() {
 				modf[i] = f[i];
 			}
 		}
+		
+		for (int i = 0; i < numFields; i++){
+			Shuffle(fids[i]);
+		}
+		
  		epoch++;
-		if (!(epoch%1000)) {
+		
+		if (!(epoch%100)) {
 			//Каждые 100 эпох будем рандомизировать по 1 коэффициенту в слое
 			for (int i = 0; i < numFields; i++)
 			{
@@ -598,7 +604,7 @@ int main() {
 							}
 						}
 						if (j < (NeuronsInLayer[i]-1)) {
-							fout << '\n';
+							fout << ' ';
 						}
 					}
 				}
