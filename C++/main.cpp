@@ -1,11 +1,8 @@
-#include <algorithm>
 #include <ctime>
 #include <iostream>
 #include <fstream>
 #include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <string>
 #include <sstream>
  
 using namespace std;
