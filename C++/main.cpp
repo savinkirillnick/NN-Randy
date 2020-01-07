@@ -506,7 +506,7 @@ int main() {
 		}
 
 		//Прогоняем сеть с текущими коэфициентами по всем загруженным данным
-		for (int i = 0; i < inputSize; i++)
+		for (int i = 0; i < (inputSize - 1); i++)
 		{
 			for (int j = 0; j < NeuronsInLayer[0]; j++)
 			{
@@ -541,7 +541,7 @@ int main() {
 			currentBalanceSum = currentBalanceQuote + currentBalanceBase * pricesArr[i];
 		}
  
-		if (currentBalanceSum > prevBalanceSum)
+		if (currentBalanceSum >= prevBalanceSum)
 		{
 			//Если текущий баланс превышает предыдущий, применяем коэффициенты
 			prevBalanceSum = currentBalanceSum;
