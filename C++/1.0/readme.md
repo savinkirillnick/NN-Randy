@@ -1,4 +1,4 @@
-# NeuroNet Randy
+# NeuroNet Randy v.1.0
 
 ## ПОДГОТОВКА
 
