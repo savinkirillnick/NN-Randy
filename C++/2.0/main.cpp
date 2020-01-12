@@ -414,7 +414,7 @@ int main ()
 				Calculate (v[j], v[j+1], modf[j]);
 			}
 			//Проверяем значение последнего нейрона последнего слоя
-			if (v[numLayers-1].GetValue(0) < 0.2)
+			if (v[numLayers-1].GetValue(0) > 0.8)
 			{
 				if (currentBalanceQuote >= amountBet) {
 					// ПОКУПКА
